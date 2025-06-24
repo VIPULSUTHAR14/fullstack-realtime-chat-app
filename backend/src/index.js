@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import { app , server } from './lib/socket.js';
 import path from 'path';
+import { fileURLToPath } from 'url';
 dotenv.config();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -17,7 +18,10 @@ app.use(cors({
 }))
 
 const PORT = process.env.PORT;
-const __dirname = path.resolve();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.use("/api/auth",authroutes)
 app.use("/api/messages",messageRoutes)
 
