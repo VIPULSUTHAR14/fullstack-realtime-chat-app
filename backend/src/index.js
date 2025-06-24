@@ -6,6 +6,7 @@ import { connectDB } from './lib/db.js';
 import cookiePasrser from 'cookie-parser'
 import cors from 'cors'
 import { app , server } from './lib/socket.js';
+import path from 'path';
 dotenv.config();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -15,9 +16,17 @@ app.use(cors({
     credentials:true,
 }))
 
-const PORT = process.env.PORT
+const PORT = process.env.PORT;
+const __dirname = path.resolve();
 app.use("/api/auth",authroutes)
 app.use("/api/messages",messageRoutes)
+if(process.env.NODE_ENV === "production"){
+    app.use(express.static(path.join(__dirname,"../frontend/dist")));
+    app.get("*",(req,res)=>{
+        res.sendFile(path.resolve(__dirname,"../frontend/dist/index.html"));
+    })
+}
+
 server.listen(PORT,()=>{
     console.log("server is running on PORT:", +PORT);
     connectDB();
