@@ -27,4 +27,10 @@ function getReceiverSocketId(userId) {
   return userSocketMap[userId];
 }
 
-export {io , initSocket, getReceiverSocketId };
+// ✅ Use this to access io safely after initSocket
+function getIO() {
+  if (!io) throw new Error("Socket.io not initialized!");
+  return io;
+}
+
+export { initSocket, getReceiverSocketId, getIO };
