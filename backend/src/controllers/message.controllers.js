@@ -28,22 +28,39 @@ export const getMessages = async (req, res) => {
             return res.status(400).json({ message: "Invalid user ID format" });
         }
 
-        // Check if the user to chat with exists
-        const userExists = await User.findById(UserToChatId);
+        // Check if the user to chat with exists with timeout
+        const userExists = await Promise.race([
+            User.findById(UserToChatId),
+            new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Database timeout')), 10000)
+            )
+        ]);
+        
         if (!userExists) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const messages = await Message.find({
-            $or: [
-                { senderId: myId, receiverId: UserToChatId },
-                { senderId: UserToChatId, receiverId: myId },
-            ]
-        }).sort({ createdAt: 1 });
+        // Get messages with timeout
+        const messages = await Promise.race([
+            Message.find({
+                $or: [
+                    { senderId: myId, receiverId: UserToChatId },
+                    { senderId: UserToChatId, receiverId: myId },
+                ]
+            }).sort({ createdAt: 1 }),
+            new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Database timeout')), 15000)
+            )
+        ]);
 
         res.status(200).json(messages);
     } catch (error) {
         console.error("Error in getMessages Controller:", error.message);
+        
+        if (error.message === 'Database timeout') {
+            return res.status(504).json({ message: "Request timeout - please try again" });
+        }
+        
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
@@ -81,7 +98,7 @@ export const SendMessage = async (req, res) => {
 
     res.status(200).json(newMessage);
   } catch (error) {
-    console.log("Error in SendMessage Controller", error.message);
+    console.error("Error in SendMessage Controller:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };

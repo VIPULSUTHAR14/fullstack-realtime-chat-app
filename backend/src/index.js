@@ -14,6 +14,12 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
+
+// Set server timeouts
+server.timeout = 30000; // 30 seconds
+server.keepAliveTimeout = 65000; // 65 seconds
+server.headersTimeout = 66000; // 66 seconds
+
 initSocket(server); // ✅ initialize sockets on this server
 
 // Global error handlers
@@ -36,9 +42,28 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: process.env.NODE_ENV === "production" 
+    ? ["https://fullstack-realtime-chat-app-7.onrender.com", "http://localhost:5173"]
+    : "http://localhost:5173",
   credentials: true,
 }));
+
+// Request timeout middleware
+app.use((req, res, next) => {
+    req.setTimeout(25000, () => {
+        res.status(408).json({ message: 'Request timeout' });
+    });
+    next();
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'OK', 
+        message: 'Server is running',
+        timestamp: new Date().toISOString()
+    });
+});
 
 // Routes
 app.use("/api/auth", authroutes);
@@ -48,6 +73,11 @@ app.use("/api/messages", messageRoutes);
 app.use((err, req, res, next) => {
     console.error('Express error:', err);
     res.status(500).json({ message: 'Internal Server Error' });
+});
+
+// 404 handler
+app.use('/api/*', (req, res) => {
+    res.status(404).json({ message: 'API endpoint not found' });
 });
 
 // Production build serve
