@@ -16,6 +16,21 @@ const app = express();
 const server = http.createServer(app);
 initSocket(server); // ✅ initialize sockets on this server
 
+// Global error handlers
+process.on('unhandledRejection', (err) => {
+    console.error('Unhandled Promise Rejection:', err);
+    server.close(() => {
+        process.exit(1);
+    });
+});
+
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    server.close(() => {
+        process.exit(1);
+    });
+});
+
 // Middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -28,6 +43,12 @@ app.use(cors({
 // Routes
 app.use("/api/auth", authroutes);
 app.use("/api/messages", messageRoutes);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Express error:', err);
+    res.status(500).json({ message: 'Internal Server Error' });
+});
 
 // Production build serve
 const __dirname = path.resolve();

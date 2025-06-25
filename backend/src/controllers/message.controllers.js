@@ -2,6 +2,7 @@ import cloudinary from "../lib/cloudinary.js";
 import { getReceiverSocketId ,getIO } from "../lib/socket.js";
 import Message from "../models/message.model.js";
 import User from "../models/user.model.js";
+import mongoose from "mongoose";
 
 export const getUserForSidebar = async (req, res) => {
   try {
@@ -17,22 +18,35 @@ export const getUserForSidebar = async (req, res) => {
   }
 };
 
-export const getMessages = async (req,res)=>{
-    try{
-        const {id:UserToChatId} = req.params
+export const getMessages = async (req, res) => {
+    try {
+        const { id: UserToChatId } = req.params;
         const myId = req.user._id;
+
+        // Validate ObjectId format
+        if (!mongoose.Types.ObjectId.isValid(UserToChatId)) {
+            return res.status(400).json({ message: "Invalid user ID format" });
+        }
+
+        // Check if the user to chat with exists
+        const userExists = await User.findById(UserToChatId);
+        if (!userExists) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
         const messages = await Message.find({
-            $or:[
-                {senderId:myId, receiverId:UserToChatId},
-                {senderId:UserToChatId, receiverId:myId},
+            $or: [
+                { senderId: myId, receiverId: UserToChatId },
+                { senderId: UserToChatId, receiverId: myId },
             ]
-        }).sort({createdAt: 1})
-        res.status(200).json(messages)
-    }catch(error){
-        console.log("Error in getMessages Controller",error.message);
-        res.status(500).json({message:"Internal Server Error"})
+        }).sort({ createdAt: 1 });
+
+        res.status(200).json(messages);
+    } catch (error) {
+        console.error("Error in getMessages Controller:", error.message);
+        res.status(500).json({ message: "Internal Server Error" });
     }
-}
+};
 
 export const SendMessage = async (req, res) => {
   try {
