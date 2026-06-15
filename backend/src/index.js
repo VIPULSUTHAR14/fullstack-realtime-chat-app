@@ -43,7 +43,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 app.use(cors({
   origin: process.env.NODE_ENV === "production"
-    ? ["https://fullstack-realtime-chat-app-7.onrender.com", "http://localhost:5173"]
+    ? ["https://fullstack-realtime-chat-app-7.onrender.com", "https://fullstack-realtime-chat-app-6.onrender.com", "https://fullstack-realtime-chat-app-6.onrender.com/", "http://localhost:5173"]
     : ["http://localhost:5173", "http://localhost:5174"],
   credentials: true,
 }));
