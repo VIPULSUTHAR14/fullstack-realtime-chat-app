@@ -24,17 +24,17 @@ initSocket(server); // ✅ initialize sockets on this server
 
 // Global error handlers
 process.on('unhandledRejection', (err) => {
-    console.error('Unhandled Promise Rejection:', err);
-    server.close(() => {
-        process.exit(1);
-    });
+  console.error('Unhandled Promise Rejection:', err);
+  server.close(() => {
+    process.exit(1);
+  });
 });
 
 process.on('uncaughtException', (err) => {
-    console.error('Uncaught Exception:', err);
-    server.close(() => {
-        process.exit(1);
-    });
+  console.error('Uncaught Exception:', err);
+  server.close(() => {
+    process.exit(1);
+  });
 });
 
 // Middleware
@@ -42,27 +42,27 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 app.use(cors({
-  origin: process.env.NODE_ENV === "production" 
+  origin: process.env.NODE_ENV === "production"
     ? ["https://fullstack-realtime-chat-app-7.onrender.com", "http://localhost:5173"]
-    : "http://localhost:5173",
+    : ["http://localhost:5173", "http://localhost:5174"],
   credentials: true,
 }));
 
 // Request timeout middleware
 app.use((req, res, next) => {
-    req.setTimeout(25000, () => {
-        res.status(408).json({ message: 'Request timeout' });
-    });
-    next();
+  req.setTimeout(25000, () => {
+    res.status(408).json({ message: 'Request timeout' });
+  });
+  next();
 });
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-    res.status(200).json({ 
-        status: 'OK', 
-        message: 'Server is running',
-        timestamp: new Date().toISOString()
-    });
+  res.status(200).json({
+    status: 'OK',
+    message: 'Server is running',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Routes
@@ -71,13 +71,13 @@ app.use("/api/messages", messageRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-    console.error('Express error:', err);
-    res.status(500).json({ message: 'Internal Server Error' });
+  console.error('Express error:', err);
+  res.status(500).json({ message: 'Internal Server Error' });
 });
 
 // 404 handler
 app.use('/api/*', (req, res) => {
-    res.status(404).json({ message: 'API endpoint not found' });
+  res.status(404).json({ message: 'API endpoint not found' });
 });
 
 // Production build serve
